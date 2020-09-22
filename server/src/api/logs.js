@@ -23,8 +23,22 @@ router.post("/", async (req, res, next) => {
     if (err.name === "ValidationError") res.status(422);
     next(err);
   }
-
   console.log(req.body);
+});
+
+router.delete("/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    await LogEntry.findByIdAndRemove(id, () => {
+      res.send({ removedId: id });
+    });
+  } catch (err) {
+    console.log(err);
+  }
+});
+
+router.delete("/remove", (req, res) => {
+  LogEntry.deleteMany({ title: "ff" }, () => console.log("deleted"));
 });
 
 module.exports = router;

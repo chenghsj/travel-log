@@ -60,6 +60,7 @@ body {
 }
 
 .mapboxgl-popup-content {
+  background: linen !important;
   border-radius: 10px !important;
   box-shadow: 0px 4px 10px -3px !important;
   padding: 10px !important;

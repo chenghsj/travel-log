@@ -37,8 +37,4 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-router.delete("/remove", (req, res) => {
-  LogEntry.deleteMany({ title: "ff" }, () => console.log("deleted"));
-});
-
 module.exports = router;

@@ -10,7 +10,18 @@ body {
 }
 
 #root {
-  font-family: "Segoe UI";
+  font-family: "Roboto";
+}
+
+.mapboxgl-ctrl-top-right {
+  top: 3rem !important;
+}
+
+.mapboxgl-ctrl-group {
+  top: 2.5rem;
+  position: relative;
+  width: fit-content;
+  margin: 1rem;
 }
 
 .closeBtn {
@@ -46,7 +57,7 @@ body {
   background-color: grey;
 }
 
-.popUp-container {
+.popup-container {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -91,12 +102,9 @@ body {
 }
 
 .entry-form button {
-  border: none;
-  background: #ed4b82;
   border-radius: 3px;
   height: 1.3rem;
   margin: 0.4rem 0 0;
-  color: white;
 }
 
 .entry-form input,

@@ -1,6 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Header from "./Header";
-import ReactMapGL, { Marker, Popup } from "react-map-gl";
+import PopupContent from "./PopupContent";
+import ReactMapGL, {
+  GeolocateControl,
+  NavigationControl,
+  Marker,
+  Popup,
+} from "react-map-gl";
+import Geocoder from "react-map-gl-geocoder";
+import "react-map-gl-geocoder/dist/mapbox-gl-geocoder.css";
 
 import { listLogEntries, deleteLogEntry } from "./API";
 import LogEntryForm from "./LogEntryForm";
@@ -14,10 +22,11 @@ const App = () => {
   const [showPopup, setShowPopup] = useState({});
   const [addEntryLocation, setAddEntryLocation] = useState(null);
   const [viewport, setViewport] = useState({
-    latitude: 23.795164,
-    longitude: 120.795833,
+    latitude: 23.7,
+    longitude: 120.9,
     zoom: 7,
   });
+  const mapRef = useRef();
 
   const getEntries = async () => {
     const logEntries = await listLogEntries();
@@ -28,6 +37,23 @@ const App = () => {
   useEffect(() => {
     getEntries();
   }, []);
+
+  const handleViewportChange = useCallback(
+    (newViewport) => setViewport(newViewport),
+    []
+  );
+
+  const handleGeocoderViewportChange = useCallback(
+    (newViewport) => {
+      const geocoderDefaultOverrides = { transitionDuration: 1000 };
+
+      return handleViewportChange({
+        ...newViewport,
+        ...geocoderDefaultOverrides,
+      });
+    },
+    [handleViewportChange]
+  );
 
   const showAddMarkerPopup = (e) => {
     const [longitude, latitude] = e.lngLat;
@@ -45,40 +71,62 @@ const App = () => {
     getEntries();
   };
 
+  const markerSvg = (color, entry, clickable = true) => {
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        onClick={
+          clickable
+            ? () => {
+                setShowPopup({ [entry._id]: true });
+                setAddEntryLocation(null);
+              }
+            : undefined
+        }
+        style={{
+          cursor: "pointer",
+          stroke: "none",
+          fill: `${color}`,
+          height: `${3 * viewport.zoom}`,
+          transform: `translate(${(-3 * viewport.zoom) / 2}px,${
+            -3 * viewport.zoom
+          }px)`,
+        }}
+      >
+        <path d={ICON} />
+      </svg>
+    );
+  };
+
   return (
     <>
       <Header />
       <ReactMapGL
+        ref={mapRef}
         {...viewport}
         width="100vw"
         height="100vh"
         mapStyle="mapbox://styles/shawn-cheng/ckfcve2ir01e019p794n1gh9t"
         mapboxApiAccessToken={process.env.REACT_APP_MAPBOX_TOKEN}
-        onViewportChange={(nextViewport) => setViewport(nextViewport)}
+        onViewportChange={handleViewportChange}
         doubleClickZoom={false}
         onDblClick={showAddMarkerPopup}
       >
+        <Geocoder
+          mapRef={mapRef}
+          onViewportChange={handleGeocoderViewportChange}
+          mapboxApiAccessToken={process.env.REACT_APP_MAPBOX_TOKEN}
+          position="top-right"
+        />
+        <GeolocateControl
+          positionOptions={{ enableHighAccuracy: true }}
+          trackUserLocation={true}
+        />
+        <NavigationControl />
         {logEntries.map((entry, index) => (
           <React.Fragment key={entry._id}>
             <Marker latitude={entry.latitude} longitude={entry.longitude}>
-              <svg
-                viewBox="0 0 24 24"
-                onClick={() => {
-                  setShowPopup({ [entry._id]: true });
-                  setAddEntryLocation(null);
-                }}
-                style={{
-                  height: `${4 * viewport.zoom}`,
-                  cursor: "pointer",
-                  fill: "#f77b72",
-                  stroke: "none",
-                  transform: `translate(${(-4 * viewport.zoom) / 2}px,${
-                    -4 * viewport.zoom
-                  }px)`,
-                }}
-              >
-                <path d={ICON} />
-              </svg>
+              {markerSvg("#f77b72", entry)}
             </Marker>
             {showPopup[entry._id] && (
               <Popup
@@ -87,49 +135,12 @@ const App = () => {
                 closeOnClick={false}
                 anchor="top"
               >
-                <img
-                  className="closeBtn"
-                  src="close.svg"
-                  alt="close button"
-                  onClick={() => setShowPopup({})}
+                <PopupContent
+                  entry={entry}
+                  setShowPopup={setShowPopup}
+                  viewport={viewport}
+                  handleDelete={handleDelete}
                 />
-                <div
-                  className="popUp-container"
-                  style={{
-                    maxWidth: `calc(4vmin * ${viewport.zoom})`,
-                  }}
-                >
-                  <h4 style={{ margin: "2px" }}>{entry.title}</h4>
-                  {entry?.image && (
-                    <img
-                      className="logImage"
-                      style={{
-                        width: `calc(4vmin * ${viewport.zoom})`,
-                        height: `calc(2.5vmin * ${viewport.zoom})`,
-                      }}
-                      src={entry.image}
-                      alt="view"
-                    />
-                  )}
-                  <p style={{ margin: "2px", alignSelf: "baseline" }}>
-                    {entry.comments}
-                  </p>
-                  <small style={{ alignSelf: "flex-end" }}>
-                    <i>
-                      <p style={{ margin: "2px" }}>
-                        {new Date(entry.visitDate).toLocaleDateString()}
-                      </p>
-                    </i>
-                  </small>
-                </div>
-                <button
-                  className="deleteBtn"
-                  onClick={(e) => {
-                    handleDelete(e, entry._id);
-                  }}
-                >
-                  DELETE
-                </button>
               </Popup>
             )}
           </React.Fragment>
@@ -140,20 +151,7 @@ const App = () => {
               latitude={addEntryLocation.latitude}
               longitude={addEntryLocation.longitude}
             >
-              <svg
-                viewBox="0 0 24 24"
-                style={{
-                  height: `${4 * viewport.zoom}`,
-                  cursor: "pointer",
-                  fill: "#e91e63",
-                  stroke: "none",
-                  transform: `translate(${(-4 * viewport.zoom) / 2}px,${
-                    -4 * viewport.zoom
-                  }px)`,
-                }}
-              >
-                <path d={ICON} />
-              </svg>
+              {markerSvg("#e91e63", null, false)}
             </Marker>
             <Popup
               latitude={addEntryLocation.latitude}

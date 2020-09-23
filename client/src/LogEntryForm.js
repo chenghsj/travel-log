@@ -28,12 +28,14 @@ function LogEntryForm({ latitude, longitude, onClose }) {
       <label htmlFor="comments">Comments</label>
       <textarea name="comments" rows="2" ref={register}></textarea>
       <label htmlFor="description">Description</label>
-      <textarea name="description" rows="2" ref={register}></textarea>
-      <label htmlFor="visitDate">Visit Date</label>
+      {/* <textarea name="description" rows="2" ref={register}></textarea>
+      <label htmlFor="visitDate">Visit Date</label> */}
       <input name="visitDate" type="date" required ref={register} />
       <label htmlFor="image">Image</label>
       <input name="image" type="text" ref={register} />
-      <button disabled={loading}>{loading ? "Loading..." : "ADD"}</button>
+      <button className="deleteBtn" disabled={loading}>
+        {loading ? "Loading..." : "ADD"}
+      </button>
     </form>
   );
 }

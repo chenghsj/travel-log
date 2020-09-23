@@ -24,7 +24,7 @@ mongoose
 
 app.use(morgan("common"));
 app.use(helmet());
-app.use(cors({ origin: "*" }));
+app.use(cors({ origin: process.env.CORS_ORIGIN }));
 app.use(express.json());
 
 app.get("/", (req, res) => {

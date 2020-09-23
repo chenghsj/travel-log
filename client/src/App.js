@@ -162,7 +162,7 @@ const App = () => {
               anchor="top"
             >
               <img
-                class="closeBtn"
+                className="closeBtn"
                 src="close.svg"
                 alt="close button"
                 onClick={() => setAddEntryLocation(null)}
